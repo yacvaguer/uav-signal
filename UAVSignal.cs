@@ -12,7 +12,7 @@ using static BaseEntity;
 
 namespace Oxide.Plugins
 {
-    [Info("UAVSignal", "Yac Vaguer", "1.4.1")]
+    [Info("UAVSignal", "Yac Vaguer", "1.4.2")]
     [Description("Call a UAV to detect nearby players and NPCs.")]
     public class UAVSignal : RustPlugin
     {

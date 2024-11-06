@@ -24,9 +24,7 @@ namespace Oxide.Plugins
         private HashSet<BasePlayer> playersWithUI = new HashSet<BasePlayer>();
         private HashSet<BasePlayer> currentPlayersInRadius = new HashSet<BasePlayer>();
 
-
         private Configuration config;
-        private List<BasePlayer> playersInRadius = new List<BasePlayer>();
         private HashSet<BasePlayer> trackedPlayers = new HashSet<BasePlayer>();
         private Timer markingPlayersTimer;
         private Timer playersInRadiusTimer;
@@ -62,20 +60,27 @@ namespace Oxide.Plugins
         [ChatCommand("uav")]
         private void UAVCommand(BasePlayer player, string command, string[] args)
         {
-            if (!HasPermission(player)) {
+            if (!HasPermission(player))
+            {
                 player.ChatMessage(GetMessage("NoPermission", player.UserIDString));
                 return;
             }
 
-            if (args.Length == 1) {
+            if (args.Length == 1)
+            {
                 var targetPlayer = FindPlayer(args[0]);
-                if (targetPlayer != null) {
+                if (targetPlayer != null)
+                {
                     GiveUAVSignal(targetPlayer);
                     player.ChatMessage(string.Format(GetMessage("UAVGiven", player.UserIDString), targetPlayer.displayName));
-                } else {
+                }
+                else
+                {
                     player.ChatMessage(string.Format(GetMessage("PlayerNotFound", player.UserIDString), args[0]));
                 }
-            } else {
+            }
+            else
+            {
                 GiveUAVSignal(player);
                 player.ChatMessage(GetMessage("UAVReceived", player.UserIDString));
             }
@@ -86,21 +91,26 @@ namespace Oxide.Plugins
         {
             var player = arg.Player();
 
-            if (player != null && !HasPermission(player)) {
+            if (player != null && !HasPermission(player))
+            {
                 arg.ReplyWith(GetMessage("NoPermission", player.UserIDString));
                 return;
             }
 
-            if (arg.Args == null || arg.Args.Length == 0) {
+            if (arg.Args == null || arg.Args.Length == 0)
+            {
                 arg.ReplyWith("Usage: uav <player name or ID>");
                 return;
             }
 
             var targetPlayer = FindPlayer(arg.Args[0]);
-            if (targetPlayer != null) {
+            if (targetPlayer != null)
+            {
                 GiveUAVSignal(targetPlayer);
                 arg.ReplyWith($"UAV signal given to {targetPlayer.displayName}");
-            } else {
+            }
+            else
+            {
                 arg.ReplyWith($"Player '{arg.Args[0]}' not found.");
             }
         }
@@ -111,14 +121,16 @@ namespace Oxide.Plugins
 
         private void OnExplosiveThrown(BasePlayer player, BaseEntity entity)
         {
-            if (entity is SupplySignal signal && signal.skinID == config.UAV.SkinID) {
+            if (entity is SupplySignal signal && signal.skinID == config.UAV.SkinID)
+            {
                 ThrowUAV(signal, player);
             }
         }
 
         private void OnExplosiveDropped(BasePlayer player, BaseEntity entity, ThrownWeapon item)
         {
-            if (entity is SupplySignal signal && signal.skinID == config.UAV.SkinID) {
+            if (entity is SupplySignal signal && signal.skinID == config.UAV.SkinID)
+            {
                 ThrowUAV(signal, player);
             }
         }
@@ -133,23 +145,28 @@ namespace Oxide.Plugins
 
         private void OnEntityDeath(BaseCombatEntity entity, HitInfo info)
         {
-            if (entity is BasePlayer player) {
-                if (playersWithUI.Contains(player)) {
+            if (entity is BasePlayer player)
+            {
+                if (playersWithUI.Contains(player))
+                {
                     HideTrackedIcon(player);
                 }
 
-                if (player == caller) {
+                if (player == caller)
+                {
                     DestroyUAV();
                 }
             }
         }
         private void OnPlayerDisconnected(BasePlayer player, string reason)
         {
-            if (playersWithUI.Contains(player)) {
+            if (playersWithUI.Contains(player))
+            {
                 HideTrackedIcon(player);
             }
 
-            if (player == caller) {
+            if (player == caller)
+            {
                 DestroyUAV();
             }
         }
@@ -166,10 +183,13 @@ namespace Oxide.Plugins
             string containerName = container.ShortPrefabName;
             float dropChance;
 
-            if (config.Loot.Containers.TryGetValue(containerName, out dropChance)) {
-                if (RollChance(dropChance)) {
+            if (config.Loot.Containers.TryGetValue(containerName, out dropChance))
+            {
+                if (RollChance(dropChance))
+                {
                     var item = ItemManager.CreateByName(SupplySignalShortname, 1, config.UAV.SkinID);
-                    if (item != null) {
+                    if (item != null)
+                    {
                         item.name = config.UAV.ItemName;
                         container.inventory.capacity++;
                         container.inventorySlots++;
@@ -183,7 +203,8 @@ namespace Oxide.Plugins
 
         private void OnEntityKill(LootContainer container)
         {
-            if (container != null) {
+            if (container != null)
+            {
                 processedContainers.Remove(container);
             }
         }
@@ -194,7 +215,8 @@ namespace Oxide.Plugins
 
         private void StartUAV(BasePlayer player)
         {
-            if (isActive) {
+            if (isActive)
+            {
                 player.ChatMessage(GetMessage("UAVAlreadyActive", player.UserIDString));
                 GiveUAVSignal(player);
                 return;
@@ -214,7 +236,8 @@ namespace Oxide.Plugins
             Vector3 spawnPosition = targetPosition + player.transform.forward.normalized * config.Jet.SpawnDistance;
 
             var jet = GameManager.server.CreateEntity(F15Prefab, spawnPosition) as F15;
-            if (jet == null) {
+            if (jet == null)
+            {
                 PrintError("Failed to create F15 entity.");
                 isActive = false;
                 return;
@@ -246,23 +269,27 @@ namespace Oxide.Plugins
 
         private void DestroyUAV()
         {
-            if (markingPlayersTimer != null && !markingPlayersTimer.Destroyed) {
+            if (markingPlayersTimer != null && !markingPlayersTimer.Destroyed)
+            {
                 markingPlayersTimer.Destroy();
             }
 
-            if (playersInRadiusTimer != null && !playersInRadiusTimer.Destroyed) {
+            if (playersInRadiusTimer != null && !playersInRadiusTimer.Destroyed)
+            {
                 playersInRadiusTimer.Destroy();
             }
 
             isActive = false;
-            playersInRadius.Clear();
+            currentPlayersInRadius.Clear();
             trackedPlayers.Clear();
 
-            foreach (var player in playersWithUI.ToList()) {
+            foreach (var player in playersWithUI.ToList())
+            {
                 HideTrackedIcon(player);
             }
 
-            if (caller != null) {
+            if (caller != null)
+            {
                 caller.ChatMessage(GetMessage("UAVEnded", caller.UserIDString));
                 DebugLog($"UAV ended for {caller.displayName}");
                 caller = null;
@@ -270,7 +297,8 @@ namespace Oxide.Plugins
         }
         private void UpdatePlayersInRadius()
         {
-            if (caller == null || !caller.IsConnected) {
+            if (caller == null || !caller.IsConnected)
+            {
                 DestroyUAV();
                 return;
             }
@@ -279,36 +307,43 @@ namespace Oxide.Plugins
             Vis.Entities<BasePlayer>(caller.transform.position, config.UAV.Radius, players, Rust.Layers.Mask.Player_Server);
 
 
-            foreach (var player in players) {
-                if (player == null || player == caller) {
+            foreach (var player in players)
+            {
+                if (player == null || player == caller || !player.IsConnected)
+                {
                     continue;
                 }
 
-
                 currentPlayersInRadius.Add(player);
 
-                if (!playersWithUI.Contains(player)) {
+                if (!playersWithUI.Contains(player))
+                {
                     ShowTrackedIcon(player);
 
-                    if (!trackedPlayers.Contains(player)) {
+                    if (!trackedPlayers.Contains(player))
+                    {
                         trackedPlayers.Add(player);
 
-                        if (player.IsNpc) {
+                        if (player.IsNpc)
+                        {
                             DebugLog($"UAV has detected NPC '{player.ShortPrefabName}' at position {player.transform.position}");
-                        } else {
+                        }
+                        else
+                        {
                             DebugLog($"UAV has detected player '{player.displayName}' (ID: {player.UserIDString}) at position {player.transform.position}");
                         }
                     }
                 }
             }
-
             HideUIForPlayersThatAreNotInRadius();
         }
 
         private void HideUIForPlayersThatAreNotInRadius()
         {
-            foreach (var player in playersWithUI.ToList()) {
-                if (!currentPlayersInRadius.Contains(player)) {
+            foreach (var player in playersWithUI.ToList())
+            {
+                if (!currentPlayersInRadius.Contains(player))
+                {
                     HideTrackedIcon(player);
                 }
             }
@@ -317,23 +352,41 @@ namespace Oxide.Plugins
 
         private void MarkPlayers(BasePlayer player)
         {
-            if (player == null || !player.IsConnected) {
+            if (player == null || !player.IsConnected)
+            {
                 DestroyUAV();
+                DebugLog("Destroying UAV due to error with the player throwing the Signal");
                 return;
             }
 
-            foreach (var target in playersInRadius) {
+            foreach (var target in currentPlayersInRadius)
+            {
                 if (target == null || target.IsDead())
+                {
+                    DebugLog("Target is null or dead");
                     continue;
+                }
 
-                BasePlayer.PingType pingType = target.IsNpc ? BasePlayer.PingType.Gun : BasePlayer.PingType.Hostile;
+                BasePlayer.PingType type = BasePlayer.PingType.Hostile;
+
 
                 if (player.Team != null && player.Team.members.Contains(target.userID))
+                {
+                    DebugLog($"Target is part of the team {target.displayName}");
                     continue;
+                }
+
+                if (!target.userID.IsSteamId())
+                {
+                    type = BasePlayer.PingType.Gun;
+                }
+
 
                 Vector3 pingPosition = target.transform.position + Vector3.up * 2f;
-                player.AddPingAtLocation(pingType, pingPosition, 3f, target.net.ID);
-                DebugLog($"Added ping for {(target.IsNpc ? "NPC" : "Player")} '{target.displayName}' at position {pingPosition}");
+
+                player.AddPingAtLocation(type, pingPosition, 3f, target.net.ID);
+                DebugLog($"Added ping for {(target.IsNpc ? "NPC" : "Player")} '{target.displayName}' level {type} at position {pingPosition}");
+
             }
         }
 
@@ -349,7 +402,8 @@ namespace Oxide.Plugins
 
             string panelName = "UAVTrackedPanel";
 
-            elements.Add(new CuiPanel {
+            elements.Add(new CuiPanel
+            {
                 Image =
                 {
                     Color = config.UAV.PanelColor
@@ -362,7 +416,8 @@ namespace Oxide.Plugins
                 CursorEnabled = false
             }, "Hud", panelName);
 
-            elements.Add(new CuiLabel {
+            elements.Add(new CuiLabel
+            {
                 Text =
                 {
                     Color = config.UAV.TextColor,
@@ -377,7 +432,8 @@ namespace Oxide.Plugins
                 }
             }, panelName);
 
-            elements.Add(new CuiElement {
+            elements.Add(new CuiElement
+            {
                 Parent = panelName,
                 Components =
                 {
@@ -435,7 +491,8 @@ namespace Oxide.Plugins
         private void GiveUAVSignal(BasePlayer player)
         {
             var item = ItemManager.CreateByName(SupplySignalShortname, 1, config.UAV.SkinID);
-            if (item != null) {
+            if (item != null)
+            {
                 item.name = config.UAV.ItemName;
                 player.GiveItem(item);
                 DebugLog($"Gave UAV signal to {player.displayName}");
@@ -449,7 +506,8 @@ namespace Oxide.Plugins
 
         private void DebugLog(string message)
         {
-            if (config.DebugMode) {
+            if (config.DebugMode)
+            {
                 Puts(message);
             }
         }
@@ -543,14 +601,20 @@ namespace Oxide.Plugins
 
         private void LoadConfigValues()
         {
-            try {
+            try
+            {
                 config = Config.ReadObject<Configuration>();
-                if (config == null) {
+                if (config == null)
+                {
                     LoadDefaultConfig();
-                } else {
+                }
+                else
+                {
                     SaveConfig();
                 }
-            } catch {
+            }
+            catch
+            {
                 PrintError("Configuration file is corrupt; loading default configuration.");
                 LoadDefaultConfig();
             }
@@ -567,7 +631,8 @@ namespace Oxide.Plugins
 
         protected override void LoadDefaultMessages()
         {
-            lang.RegisterMessages(new Dictionary<string, string> {
+            lang.RegisterMessages(new Dictionary<string, string>
+            {
                 ["NoPermission"] = "You do not have permission to use this command.",
                 ["PlayerNotFound"] = "Player '{0}' not found.",
                 ["UAVGiven"] = "UAV Signal given to {0}.",

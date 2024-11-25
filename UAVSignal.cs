@@ -1,18 +1,16 @@
-﻿using Newtonsoft.Json;
-
-using Oxide.Core;
-using Oxide.Core.Libraries.Covalence;
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Newtonsoft.Json;
+using Oxide.Core;
+using Oxide.Core.Libraries.Covalence;
 using Oxide.Game.Rust.Cui;
 using UnityEngine;
 using static BaseEntity;
 
 namespace Oxide.Plugins
 {
-    [Info("UAVSignal", "Yac Vaguer", "1.4.2")]
+    [Info("UAVSignal", "Yac Vaguer", "1.4.3")]
     [Description("Call a UAV to detect nearby players and NPCs.")]
     public class UAVSignal : RustPlugin
     {
@@ -72,11 +70,18 @@ namespace Oxide.Plugins
                 if (targetPlayer != null)
                 {
                     GiveUAVSignal(targetPlayer);
-                    player.ChatMessage(string.Format(GetMessage("UAVGiven", player.UserIDString), targetPlayer.displayName));
+                    player.ChatMessage(
+                        string.Format(
+                            GetMessage("UAVGiven", player.UserIDString),
+                            targetPlayer.displayName
+                        )
+                    );
                 }
                 else
                 {
-                    player.ChatMessage(string.Format(GetMessage("PlayerNotFound", player.UserIDString), args[0]));
+                    player.ChatMessage(
+                        string.Format(GetMessage("PlayerNotFound", player.UserIDString), args[0])
+                    );
                 }
             }
             else
@@ -158,6 +163,7 @@ namespace Oxide.Plugins
                 }
             }
         }
+
         private void OnPlayerDisconnected(BasePlayer player, string reason)
         {
             if (playersWithUI.Contains(player))
@@ -170,6 +176,7 @@ namespace Oxide.Plugins
                 DestroyUAV();
             }
         }
+
         private object CanLootEntity(BasePlayer player, LootContainer container)
         {
             if (container == null || !config.Loot.Enabled)
@@ -187,7 +194,11 @@ namespace Oxide.Plugins
             {
                 if (RollChance(dropChance))
                 {
-                    var item = ItemManager.CreateByName(SupplySignalShortname, 1, config.UAV.SkinID);
+                    var item = ItemManager.CreateByName(
+                        SupplySignalShortname,
+                        1,
+                        config.UAV.SkinID
+                    );
                     if (item != null)
                     {
                         item.name = config.UAV.ItemName;
@@ -227,13 +238,16 @@ namespace Oxide.Plugins
 
             SpawnJet(player);
             player.ChatMessage(GetMessage("UAVCalled", player.UserIDString));
-            DebugLog($"UAV started by {player.displayName} at position {player.transform.position}");
+            DebugLog(
+                $"UAV started by {player.displayName} at position {player.transform.position}"
+            );
         }
 
         private void SpawnJet(BasePlayer player)
         {
             Vector3 targetPosition = player.transform.position;
-            Vector3 spawnPosition = targetPosition + player.transform.forward.normalized * config.Jet.SpawnDistance;
+            Vector3 spawnPosition =
+                targetPosition + player.transform.forward.normalized * config.Jet.SpawnDistance;
 
             var jet = GameManager.server.CreateEntity(F15Prefab, spawnPosition) as F15;
             if (jet == null)
@@ -295,6 +309,7 @@ namespace Oxide.Plugins
                 caller = null;
             }
         }
+
         private void UpdatePlayersInRadius()
         {
             if (caller == null || !caller.IsConnected)
@@ -304,12 +319,21 @@ namespace Oxide.Plugins
             }
 
             var players = new List<BasePlayer>();
-            Vis.Entities<BasePlayer>(caller.transform.position, config.UAV.Radius, players, Rust.Layers.Mask.Player_Server);
-
+            Vis.Entities<BasePlayer>(
+                caller.transform.position,
+                config.UAV.Radius,
+                players,
+                Rust.Layers.Mask.Player_Server
+            );
 
             foreach (var player in players)
             {
-                if (player == null || player == caller || !player.IsConnected)
+                if (player == null || player == caller)
+                {
+                    continue;
+                }
+
+                if (player.userID.Get().IsSteamId() && !player.IsConnected)
                 {
                     continue;
                 }
@@ -326,11 +350,15 @@ namespace Oxide.Plugins
 
                         if (player.IsNpc)
                         {
-                            DebugLog($"UAV has detected NPC '{player.ShortPrefabName}' at position {player.transform.position}");
+                            DebugLog(
+                                $"UAV has detected NPC '{player.ShortPrefabName}' at position {player.transform.position}"
+                            );
                         }
                         else
                         {
-                            DebugLog($"UAV has detected player '{player.displayName}' (ID: {player.UserIDString}) at position {player.transform.position}");
+                            DebugLog(
+                                $"UAV has detected player '{player.displayName}' (ID: {player.UserIDString}) at position {player.transform.position}"
+                            );
                         }
                     }
                 }
@@ -347,7 +375,6 @@ namespace Oxide.Plugins
                     HideTrackedIcon(player);
                 }
             }
-
         }
 
         private void MarkPlayers(BasePlayer player)
@@ -369,7 +396,6 @@ namespace Oxide.Plugins
 
                 BasePlayer.PingType type = BasePlayer.PingType.Hostile;
 
-
                 if (player.Team != null && player.Team.members.Contains(target.userID))
                 {
                     DebugLog($"Target is part of the team {target.displayName}");
@@ -381,12 +407,12 @@ namespace Oxide.Plugins
                     type = BasePlayer.PingType.Gun;
                 }
 
-
                 Vector3 pingPosition = target.transform.position + Vector3.up * 2f;
 
                 player.AddPingAtLocation(type, pingPosition, 3f, target.net.ID);
-                DebugLog($"Added ping for {(target.IsNpc ? "NPC" : "Player")} '{target.displayName}' level {type} at position {pingPosition}");
-
+                DebugLog(
+                    $"Added ping for {(target.IsNpc ? "NPC" : "Player")} '{target.displayName}' level {type} at position {pingPosition}"
+                );
             }
         }
 
@@ -402,58 +428,55 @@ namespace Oxide.Plugins
 
             string panelName = "UAVTrackedPanel";
 
-            elements.Add(new CuiPanel
-            {
-                Image =
+            elements.Add(
+                new CuiPanel
                 {
-                    Color = config.UAV.PanelColor
+                    Image = { Color = config.UAV.PanelColor },
+                    RectTransform =
+                    {
+                        AnchorMin = config.UAV.TrackedCUIAnchorMin,
+                        AnchorMax = config.UAV.TrackedCUIAnchorMax,
+                    },
+                    CursorEnabled = false,
                 },
-                RectTransform =
-                {
-                    AnchorMin = config.UAV.TrackedCUIAnchorMin,
-                    AnchorMax = config.UAV.TrackedCUIAnchorMax
-                },
-                CursorEnabled = false
-            }, "Hud", panelName);
+                "Hud",
+                panelName
+            );
 
-            elements.Add(new CuiLabel
-            {
-                Text =
+            elements.Add(
+                new CuiLabel
                 {
-                    Color = config.UAV.TextColor,
-                    FontSize = 15,
-                    Align = TextAnchor.MiddleCenter,
-                    Text = GetMessage("BeingTracked", player.UserIDString)
+                    Text =
+                    {
+                        Color = config.UAV.TextColor,
+                        FontSize = 15,
+                        Align = TextAnchor.MiddleCenter,
+                        Text = GetMessage("BeingTracked", player.UserIDString),
+                    },
+                    RectTransform = { AnchorMin = "0.205 0.314", AnchorMax = "0.979 0.8" },
                 },
-                RectTransform =
+                panelName
+            );
+
+            elements.Add(
+                new CuiElement
+                {
+                    Parent = panelName,
+                    Components =
+                    {
+                        new CuiRawImageComponent
                         {
-                    AnchorMin = "0.205 0.314",
-                    AnchorMax = "0.979 0.8"
+                            Color = "1 1 1 1",
+                            Url = config.UAV.TrackedIconUrl,
+                        },
+                        new CuiRectTransformComponent { AnchorMin = "0 0", AnchorMax = "0.184 1" },
+                    },
                 }
-            }, panelName);
-
-            elements.Add(new CuiElement
-            {
-                Parent = panelName,
-                Components =
-                {
-            new CuiRawImageComponent
-            {
-                Color = "1 1 1 1",
-                Url = config.UAV.TrackedIconUrl
-            },
-            new CuiRectTransformComponent
-            {
-                AnchorMin = "0 0",
-                AnchorMax = "0.184 1"
-            }
-        }
-            });
+            );
 
             CuiHelper.AddUi(player, elements);
             playersWithUI.Add(player);
         }
-
 
         private void HideTrackedIcon(BasePlayer player)
         {
@@ -473,13 +496,17 @@ namespace Oxide.Plugins
 
         private bool HasPermission(BasePlayer player)
         {
-            return permission.UserHasPermission(player.UserIDString, PermissionUse) || player.IsAdmin;
+            return permission.UserHasPermission(player.UserIDString, PermissionUse)
+                || player.IsAdmin;
         }
 
         private BasePlayer FindPlayer(string nameOrId)
         {
-            var players = BasePlayer.activePlayerList
-                .Where(p => p.displayName.Contains(nameOrId, StringComparison.OrdinalIgnoreCase) || p.UserIDString == nameOrId)
+            var players = BasePlayer
+                .activePlayerList.Where(p =>
+                    p.displayName.Contains(nameOrId, StringComparison.OrdinalIgnoreCase)
+                    || p.UserIDString == nameOrId
+                )
                 .ToList();
 
             if (players.Count == 1)
@@ -549,7 +576,8 @@ namespace Oxide.Plugins
             public string ItemName { get; set; } = "UAV Signal";
 
             [JsonProperty("Tracked Icon URL")]
-            public string TrackedIconUrl { get; set; } = "https://cdn.rustpluginshub.com/unsafe/50x50/https://rustpluginshub.com/icons/location.png";
+            public string TrackedIconUrl { get; set; } =
+                "https://cdn.rustpluginshub.com/unsafe/50x50/https://rustpluginshub.com/icons/location.png";
 
             [JsonProperty("Tracked Icon Position (AnchorMin)")]
             public string TrackedCUIAnchorMin { get; set; } = "0.006 0.485";
@@ -582,14 +610,15 @@ namespace Oxide.Plugins
             public bool Enabled { get; set; } = true;
 
             [JsonProperty("Loot Containers and Drop Chances")]
-            public Dictionary<string, float> Containers { get; set; } = new Dictionary<string, float>
-            {
-                { "crate_normal", 0f },
-                { "crate_normal_2", 0f },
-                { "crate_elite", 2f },
-                { "heli_crate", 5f },
-                { "bradley_crate", 5f }
-            };
+            public Dictionary<string, float> Containers { get; set; } =
+                new Dictionary<string, float>
+                {
+                    { "crate_normal", 0f },
+                    { "crate_normal_2", 0f },
+                    { "crate_elite", 2f },
+                    { "heli_crate", 5f },
+                    { "bradley_crate", 5f },
+                };
         }
 
         protected override void LoadDefaultConfig()
@@ -631,18 +660,21 @@ namespace Oxide.Plugins
 
         protected override void LoadDefaultMessages()
         {
-            lang.RegisterMessages(new Dictionary<string, string>
-            {
-                ["NoPermission"] = "You do not have permission to use this command.",
-                ["PlayerNotFound"] = "Player '{0}' not found.",
-                ["UAVGiven"] = "UAV Signal given to {0}.",
-                ["UAVReceived"] = "You have received a UAV Signal.",
-                ["UAVCalled"] = "UAV has been called to your area.",
-                ["UAVAlreadyActive"] = "A UAV is already active.",
-                ["UAVActive"] = "UAV is now active.",
-                ["UAVEnded"] = "UAV has ended.",
-                ["BeingTracked"] = "You are being tracked",
-            }, this);
+            lang.RegisterMessages(
+                new Dictionary<string, string>
+                {
+                    ["NoPermission"] = "You do not have permission to use this command.",
+                    ["PlayerNotFound"] = "Player '{0}' not found.",
+                    ["UAVGiven"] = "UAV Signal given to {0}.",
+                    ["UAVReceived"] = "You have received a UAV Signal.",
+                    ["UAVCalled"] = "UAV has been called to your area.",
+                    ["UAVAlreadyActive"] = "A UAV is already active.",
+                    ["UAVActive"] = "UAV is now active.",
+                    ["UAVEnded"] = "UAV has ended.",
+                    ["BeingTracked"] = "You are being tracked",
+                },
+                this
+            );
         }
 
         private string GetMessage(string key, string userId = null)

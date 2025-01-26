@@ -1,4 +1,4 @@
-﻿using System;
+﻿﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json;
@@ -6,11 +6,10 @@ using Oxide.Core;
 using Oxide.Core.Libraries.Covalence;
 using Oxide.Game.Rust.Cui;
 using UnityEngine;
-using static BaseEntity;
 
 namespace Oxide.Plugins
 {
-    [Info("UAVSignal", "Yac Vaguer", "1.4.3")]
+    [Info("UAVSignal", "Yac Vaguer", "1.4.4")]
     [Description("Call a UAV to detect nearby players and NPCs.")]
     public class UAVSignal : RustPlugin
     {
@@ -326,18 +325,25 @@ namespace Oxide.Plugins
                 Rust.Layers.Mask.Player_Server
             );
 
-            foreach (var player in players)
+            var validPlayers = players
+                .Where(player =>
+                    player != null &&
+                    player != caller &&
+                    (!player.userID.Get().IsSteamId() || player.IsConnected))
+                .ToList();
+
+            var playersToRemove = trackedPlayers
+                .Except(validPlayers)
+                .ToList();
+            
+            foreach (var player in playersToRemove)
             {
-                if (player == null || player == caller)
-                {
-                    continue;
-                }
+                trackedPlayers.Remove(player);
+                DebugLog($"Stopped tracking {(player.IsNpc ? "NPC" : "Player")} '{player.displayName}'");
+            }
 
-                if (player.userID.Get().IsSteamId() && !player.IsConnected)
-                {
-                    continue;
-                }
-
+            foreach (var player in validPlayers)
+            {
                 currentPlayersInRadius.Add(player);
 
                 if (!playersWithUI.Contains(player))

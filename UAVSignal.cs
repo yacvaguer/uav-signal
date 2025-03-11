@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("UAVSignal", "Yac Vaguer", "1.4.5")]
+    [Info("UAVSignal", "Yac Vaguer", "1.4.4")]
     [Description("Call a UAV to detect nearby players and NPCs.")]
     public class UAVSignal : RustPlugin
     {

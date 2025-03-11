@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("UAVSignal", "Yac Vaguer", "1.4.4")]
+    [Info("UAVSignal", "Yac Vaguer", "1.4.5")]
     [Description("Call a UAV to detect nearby players and NPCs.")]
     public class UAVSignal : RustPlugin
     {
@@ -316,6 +316,8 @@ namespace Oxide.Plugins
                 DestroyUAV();
                 return;
             }
+
+            currentPlayersInRadius.Clear();
 
             var players = new List<BasePlayer>();
             Vis.Entities<BasePlayer>(
